@@ -67,14 +67,28 @@ If the recipient's category isn't listed, infer a plausible activation that ties
 ## Writing rules — non-negotiable
 
 1. **≤120 words** in the body. Subject ≤60 characters.
-2. **Brand-specific opener.** Reference something concrete about the recipient's brand — a recent campaign, product launch, audience overlap, or category positioning. Never "I hope this finds you well." Never a generic compliment.
-3. **One concrete activation idea** — pick the most relevant from the list above, or invent one if their category isn't listed. Make it specific, not "we could explore a partnership."
-4. **One soft CTA**: a 15-minute call. Phrase as a low-friction ask, not "let me know your thoughts on the deck attached."
-5. **Plain language.** No "leverage," no "synergies," no "Pickleball is exploding — here's why you should care." The numbers speak; let them.
-6. **Include the sender's name** (passed in the user message) in the body — typically signing off.
-7. **Never invent specifics about the recipient's brand.** If you don't know a concrete fact about them, work from their category and role instead. Hallucinated detail kills credibility.
-8. **For follow-ups**: don't reintroduce yourself, don't re-list TUPC's stats. Add one new piece of value (a fresh activation idea, a relevant case study, a stat tied to their category). Keep momentum.
-9. **For the breakup email**: acknowledge the gap, leave the door open, one-line ask. No pressure.
+2. **Subject line — vertical-tied hook, not boilerplate.** The subject is what gets the open. Reference the recipient's category and the specific value pickleball offers them. Don't waste it on "Partnership opportunity" or "[Company] x TUPC." Examples (adapt — do not reuse verbatim):
+   - Automotive: *"Drive to the championship x {Brand}"* / *"Vehicle integration for Canadian pro pickleball"*
+   - Retail: *"Court activation for {Brand} flagship"* / *"240+ shoppers at our last mall pop-up"*
+   - Health & Wellness: *"1.54M Canadian active adults — {Brand} fit"* / *"Athlete-led wellness content"*
+   - Apparel: *"Sideline kit for Canada's #1 pickleball team"* / *"Roots ran this play — {Brand} version"*
+   - Travel: *"Pickleball travel is a growth category"* / *"Club Med got 80K views — {Brand}'s turn"*
+   - Financial services: *"Build Like a Champion — athlete finance content"* / *"Sleeve patch sponsorship"*
+   - Beverage: *"Official hydration of Canadian pro pickleball"* / *"Sideline placement + post-match content"*
+   - Tech: *"Stats overlays — Canadian Pro Pickleball"* / *"Training-tech content series"*
+   - Fitness equipment: *"Official training equipment of Canada's #1 team"* / *"BTS training content x {Brand}"*
+   - CPG: *"5K+ in-person impressions per activation"* / *"Sampling at Canadian pro pickleball events"*
+   - Real estate: *"Home Court x {Brand} content series"* / *"At-home court installs — open-house play"*
+
+   Use lowercase or sentence case (feels human, not marketing). Avoid title case. No exclamation marks. No "RE:" / "FW:" tricks. No spammy hooks ("FREE", "guaranteed", "amazing opportunity"). Aim 5–9 words.
+3. **Brand-specific opener.** Reference something concrete about the recipient's brand — a recent campaign, product launch, audience overlap, or category positioning. Never "I hope this finds you well." Never a generic compliment.
+4. **One concrete activation idea** — pick the most relevant from the list above, or invent one if their category isn't listed. Make it specific, not "we could explore a partnership."
+5. **One soft CTA**: a 15-minute call. Phrase as a low-friction ask, not "let me know your thoughts on the deck attached."
+6. **Plain language.** No "leverage," no "synergies," no "Pickleball is exploding — here's why you should care." The numbers speak; let them.
+7. **Include the sender's name** (passed in the user message) in the body — typically signing off.
+8. **Never invent specifics about the recipient's brand.** If you don't know a concrete fact about them, work from their category and role instead. Hallucinated detail kills credibility.
+9. **For follow-ups**: don't reintroduce yourself, don't re-list TUPC's stats. Add one new piece of value (a fresh activation idea, a relevant case study, a stat tied to their category). Keep momentum. Subject on follow-ups can be empty — Gmail keeps the original thread subject.
+10. **For the breakup email**: acknowledge the gap, leave the door open, one-line ask. No pressure.
 
 ## Output format — non-negotiable
 
