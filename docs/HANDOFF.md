@@ -184,9 +184,20 @@ If you accidentally sign in with the wrong account: run `npx clasp logout`, then
 
 ---
 
-## Step 6 — Create the bound Sheet + Apps Script project
+## Step 6 — Enable the Apps Script API
 
-This creates a brand-new Google Sheet that has the outreach code attached to it. Run:
+**Do this BEFORE the next step.** Skipping it causes the `clasp create` command to fail halfway through, which leaves an empty orphan Sheet in your Drive that you'd have to clean up by hand.
+
+1. Open **https://script.google.com/home/usersettings** in your browser.
+2. Make sure you're signed in to the same Google account you used for `clasp login`.
+3. Toggle the **Google Apps Script API** switch to **ON**.
+4. Wait ~30 seconds for the toggle to propagate.
+
+---
+
+## Step 7 — Create the bound Sheet + Apps Script project
+
+This creates a brand-new Google Sheet with the outreach code attached. Run:
 
 ```
 npx clasp create --type sheets --title "TUPC Outreach" --rootDir ./src
@@ -195,12 +206,14 @@ npx clasp create --type sheets --title "TUPC Outreach" --rootDir ./src
 What happens:
 1. A new Google Sheet is created in your Google Drive, titled **TUPC Outreach**.
 2. A new Apps Script project is created and attached to that Sheet.
-3. A file called `.clasp.json` is written in your local folder — it records the script's unique ID.
+3. A file called `.clasp.json` is written — it records the script's unique ID.
 4. The terminal prints two URLs — one for the Sheet, one for the Apps Script editor. **Don't click them yet** — there's no code uploaded.
+
+> 🛟 **If you skipped Step 6 and got "User has not enabled the Apps Script API":** the failed attempt still created an empty Sheet in your Drive. Open https://drive.google.com/, find the empty **TUPC Outreach** Sheet (no menu after reload), right-click → Move to trash. Then enable the API per Step 6 and retry this step.
 
 ---
 
-## Step 7 — Push the code to Google
+## Step 8 — Push the code to Google
 
 This uploads all the outreach code into the Apps Script project you just created. Run:
 
@@ -209,16 +222,15 @@ npm run push
 ```
 
 What happens:
-1. You'll see `Synced appsscript.json -> src/appsscript.json` first.
-2. Then `Pushing files...` followed by a list of files.
-3. Finally `Pushed N files.` (around 15 files).
-4. If it asks **"Manifest file has been updated. Do you want to push and overwrite?"** — type `y` and press Enter.
-
-If it errors with "User has not enabled the Apps Script API": open **https://script.google.com/home/usersettings** in your browser, toggle the **Google Apps Script API** switch to ON, and run `npm run push` again.
+1. `Synced appsscript.json -> src/appsscript.json`.
+2. (If needed) `Moved .clasp.json from src/ to project root` — newer clasp versions sometimes write the config in the wrong place; the script auto-corrects this.
+3. `Pushing files...` followed by a list of files.
+4. `Pushed N files.` (around 15 files).
+5. If it asks **"Manifest file has been updated. Do you want to push and overwrite?"** — type `y` and press Enter.
 
 ---
 
-## Step 8 — Open the Sheet
+## Step 9 — Open the Sheet
 
 Run:
 
@@ -236,7 +248,7 @@ The Sheet might still look empty. That's fine — the next step fills it in.
 
 ---
 
-## Step 9 — Upload the deck PDF and copy its file ID
+## Step 10 — Upload the deck PDF and copy its file ID
 
 1. The deck PDF is in the GitHub repo, at the path `Toronto United Pickleball Club 2026 Deck.pdf`. Drag it from your local `tupc-outreach` folder into your **Google Drive** (any folder, but remember where you put it).
 2. After it uploads, **right-click the PDF** in Drive → **Get link** → **Copy link**.
@@ -251,7 +263,7 @@ Make sure the link sharing is set to **"Anyone with the link can view"** — oth
 
 ---
 
-## Step 10 — Run the setup wizard inside the Sheet
+## Step 11 — Run the setup wizard inside the Sheet
 
 1. Go back to the **TUPC Outreach** Sheet. **Reload the page** (Cmd/Ctrl + R) — this is necessary so the menu loads.
 2. In the menu bar above the Sheet, you should see **🎾 TUPC Outreach** between "Help" and the row of icons. If you don't see it, wait 10 seconds and reload again. (The first load can take up to 30 seconds while Google compiles the script.)
@@ -291,7 +303,7 @@ If the test email doesn't arrive:
 
 ---
 
-## Step 11 — Share the Sheet with the daily user
+## Step 12 — Share the Sheet with the daily user
 
 1. In the Sheet, click the **Share** button (top right).
 2. Add the daily user's email (Zach's).
