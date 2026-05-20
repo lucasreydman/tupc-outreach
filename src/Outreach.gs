@@ -256,3 +256,111 @@ function getTemplateOffset(ss, stage) {
   }
   return 4;
 }
+
+function processFollowUps(ss, opts) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
+  opts = opts || {};
+  var brands = ss.getSheetByName('Brands');
+  var config = opts.configOverride || getConfigMap(ss);
+  var cap = parseInt(config.daily_send_cap || '30', 10);
+
+  var values = brands.getDataRange().getValues();
+  var headers = values[0];
+  var headerIdx = {};
+  for (var h = 0; h < headers.length; h++) headerIdx[normalizeHeader(headers[h])] = h;
+
+  function col(key) {
+    if (headerIdx[key] === undefined) throw new Error('Missing column ' + key);
+    return headerIdx[key];
+  }
+
+  var today = new Date();
+  var todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  // Count today's sends to enforce daily_send_cap before burning Claude calls.
+  var sentToday = 0;
+  for (var i = 1; i < values.length; i++) {
+    var lastAction = values[i][col('last_action_date')];
+    if (lastAction instanceof Date && lastAction >= todayStart) sentToday++;
+  }
+  if (sentToday >= cap) {
+    if (typeof console !== 'undefined') console.log('Daily send cap reached: ' + sentToday + '/' + cap);
+    return { processed: 0, skipped_due_to_cap: true };
+  }
+
+  // Find rows due for a follow-up.
+  var due = [];
+  for (var i = 1; i < values.length; i++) {
+    var status = values[i][col('status')];
+    var nextAction = values[i][col('next_action_date')];
+    var sentCount = Number(values[i][col('sent_count')] || 0);
+    if (
+      (status === STATUS.SENT || status === STATUS.FOLLOW_UP_1 || status === STATUS.FOLLOW_UP_2) &&
+      nextAction instanceof Date && nextAction <= today &&
+      sentCount < 4
+    ) {
+      due.push({ rowIndex: i + 1, nextAction: nextAction });
+    }
+  }
+  due.sort(function (a, b) { return a.nextAction - b.nextAction; });
+
+  var processed = 0;
+  for (var j = 0; j < due.length; j++) {
+    if (sentToday >= cap) break;
+    try {
+      sendFollowUpForRow(ss, due[j].rowIndex, opts);
+      sentToday++;
+      processed++;
+    } catch (e) {
+      if (typeof console !== 'undefined') console.error('Follow-up failed for row ' + due[j].rowIndex + ': ' + e.message);
+    }
+  }
+  return { processed: processed, skipped_due_to_cap: false };
+}
+
+function sendFollowUpForRow(ss, rowIndex, opts) {
+  opts = opts || {};
+  var brands = ss.getSheetByName('Brands');
+  var config = opts.configOverride || getConfigMap(ss);
+  var row = readBrandRow(brands, rowIndex);
+
+  var nextStage = STAGE_AFTER[row.status];
+  if (!nextStage) throw new Error('No follow-up stage after ' + row.status);
+
+  var userMessage = buildUserPrompt(row, nextStage, config);
+  var claudeCall = opts.claude || function (sys, user, model, key) { return callClaude(sys, user, model, key); };
+  var result = claudeCall(BRAND_CONTEXT, userMessage, config.anthropic_model || 'claude-sonnet-4-6', config.anthropic_api_key);
+
+  var fullBody = composeFullBody(result.body, config);
+  var gmail = opts.gmail || (typeof GmailApp !== 'undefined' ? GmailApp : null);
+  var drive = opts.drive || (typeof DriveApp !== 'undefined' ? DriveApp : null);
+  if (!gmail) throw new Error('GmailApp unavailable');
+
+  var attachments = [];
+  if (config.deck_drive_file_id && drive) {
+    try { attachments.push(drive.getFileById(config.deck_drive_file_id).getBlob()); } catch (e) { /* non-fatal */ }
+  }
+  var thread = gmail.getThreadById(row.thread_id);
+  if (!thread) throw new Error('Thread ' + row.thread_id + ' not found');
+  thread.reply(fullBody, { attachments: attachments, cc: config.cc_emails || '' });
+
+  var today = new Date();
+  var newStatus;
+  var nextDate = null;
+  if (nextStage === 'breakup') {
+    newStatus = STATUS.DEAD;
+  } else if (nextStage === 'follow_up_1') {
+    newStatus = STATUS.FOLLOW_UP_1;
+    var off1 = getTemplateOffset(ss, 'follow_up_2');
+    nextDate = new Date(today.getTime() + off1 * 24 * 60 * 60 * 1000);
+  } else {
+    newStatus = STATUS.FOLLOW_UP_2;
+    var off2 = getTemplateOffset(ss, 'breakup');
+    nextDate = new Date(today.getTime() + off2 * 24 * 60 * 60 * 1000);
+  }
+
+  writeBrandCell(brands, rowIndex, 'status', newStatus);
+  writeBrandCell(brands, rowIndex, 'last_action_date', today);
+  if (nextDate) writeBrandCell(brands, rowIndex, 'next_action_date', nextDate);
+  writeBrandCell(brands, rowIndex, 'sent_count', (Number(row.sent_count) || 0) + 1);
+}
