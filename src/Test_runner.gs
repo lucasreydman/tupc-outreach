@@ -2,11 +2,21 @@
 // Tests register themselves via registerTest(name, fn) at top-level of each Test_*.gs file.
 // runAllTests() executes them all and writes pass/fail rows to the "Test Results" tab.
 // Invoke from the Apps Script editor only — there's no menu entry, by design.
+//
+// Why _getTestRegistry() instead of `var TESTS = []`: Apps Script does not
+// guarantee file load order, so other Test_*.gs files may execute their
+// top-level registerTest() calls before this file's `var TESTS = []` runs.
+// Lazy-initializing on globalThis avoids that race.
 
-var TESTS = [];
+function _getTestRegistry() {
+  if (typeof globalThis.TESTS === 'undefined' || globalThis.TESTS === null) {
+    globalThis.TESTS = [];
+  }
+  return globalThis.TESTS;
+}
 
 function registerTest(name, fn) {
-  TESTS.push({ name: name, fn: fn });
+  _getTestRegistry().push({ name: name, fn: fn });
 }
 
 function assert(cond, msg) {
@@ -32,6 +42,7 @@ function assertThrows(fn, msg) {
 }
 
 function runAllTests() {
+  var TESTS = _getTestRegistry();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName('Test Results');
   if (!sheet) sheet = ss.insertSheet('Test Results');
