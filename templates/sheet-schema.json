@@ -10,29 +10,14 @@
         {"key": "contact_email", "header": "Contact Email", "type": "email", "width": 220},
         {"key": "contact_role", "header": "Contact Role", "type": "text", "width": 160},
         {"key": "pitch_angle", "header": "Pitch Angle", "type": "text", "width": 240},
-        {"key": "status", "header": "Status", "type": "dropdown", "values": ["queued","drafted","sent","follow_up_1","follow_up_2","replied","meeting_booked","won","dead","draft_failed","send_failed","invalid_email"], "width": 130},
+        {"key": "status", "header": "Status", "type": "dropdown", "values": ["queued","drafted","sent","replied","meeting_booked","won","dead","draft_failed","send_failed","invalid_email"], "width": 130},
         {"key": "draft_subject", "header": "Draft Subject", "type": "text", "width": 240},
         {"key": "draft_body", "header": "Draft Body", "type": "text", "width": 400},
         {"key": "last_action_date", "header": "Last Action Date", "type": "date", "width": 110},
-        {"key": "next_action_date", "header": "Next Action Date", "type": "date", "width": 110},
         {"key": "reply_at", "header": "Reply At", "type": "datetime", "width": 140},
         {"key": "thread_id", "header": "Thread ID", "type": "text", "width": 200},
         {"key": "sent_count", "header": "Sent Count", "type": "number", "width": 90},
         {"key": "notes", "header": "Notes", "type": "text", "width": 300}
-      ]
-    },
-    "Templates": {
-      "frozen_rows": 1,
-      "columns": [
-        {"key": "stage", "header": "Stage", "type": "text", "width": 120},
-        {"key": "day_offset", "header": "Day Offset", "type": "number", "width": 100},
-        {"key": "user_prompt", "header": "User Prompt Template", "type": "text", "width": 500}
-      ],
-      "default_rows": [
-        ["initial", 0, "Write the FIRST cold-outreach email to {contact_name} ({contact_role}) at {company} ({category}). {pitch_hint}"],
-        ["follow_up_1", 4, "Write a SHORT follow-up to {contact_name} at {company}. Acknowledge no reply, add one new piece of value tied to their {category} category, keep momentum, soft re-CTA. Reply on existing thread — do not reintroduce yourself."],
-        ["follow_up_2", 10, "Write a VALUE-FIRST follow-up to {contact_name} at {company}. Lead with one concrete activation idea specific to {category}. Single-question CTA. Reply on existing thread."],
-        ["breakup", 20, "Write a polite BREAKUP email to {contact_name} at {company}. Acknowledge the gap, leave the door open, one-line ask. No pressure."]
       ]
     },
     "Config": {
@@ -50,7 +35,6 @@
         ["deck_drive_file_id", "", "Drive file ID of the TUPC sponsorship deck PDF"],
         ["anthropic_api_key", "", "Anthropic API key (sk-ant-...)"],
         ["anthropic_model", "claude-sonnet-4-6", "Claude model to use"],
-        ["daily_send_cap", "30", "Max total sends per 24h window"],
         ["unsubscribe_mailto", "mailto:rliorti@gmail.com?subject=Unsubscribe", "CASL unsubscribe link (required)"],
         ["business_address", "Toronto, ON, Canada", "CASL business address (required)"]
       ]
@@ -62,9 +46,9 @@
         {"key": "value", "header": "Value", "type": "text", "width": 160}
       ],
       "default_rows": [
-        ["Total sent (all time)", "=COUNTIF(Brands!O:O,\">=1\")"],
-        ["Sent this week", "=COUNTIFS(Brands!K:K,\">=\"&(TODAY()-7),Brands!H:H,\"sent\")+COUNTIFS(Brands!K:K,\">=\"&(TODAY()-7),Brands!H:H,\"follow_up_1\")+COUNTIFS(Brands!K:K,\">=\"&(TODAY()-7),Brands!H:H,\"follow_up_2\")"],
-        ["Open conversations", "=COUNTIF(Brands!H:H,\"sent\")+COUNTIF(Brands!H:H,\"follow_up_1\")+COUNTIF(Brands!H:H,\"follow_up_2\")"],
+        ["Total sent (all time)", "=COUNTIF(Brands!N:N,\">=1\")"],
+        ["Sent this week", "=COUNTIFS(Brands!K:K,\">=\"&(TODAY()-7),Brands!H:H,\"sent\")"],
+        ["Open (sent, no reply yet)", "=COUNTIF(Brands!H:H,\"sent\")"],
         ["Replied", "=COUNTIF(Brands!H:H,\"replied\")+COUNTIF(Brands!H:H,\"meeting_booked\")+COUNTIF(Brands!H:H,\"won\")"],
         ["Meetings booked", "=COUNTIF(Brands!H:H,\"meeting_booked\")+COUNTIF(Brands!H:H,\"won\")"],
         ["Won", "=COUNTIF(Brands!H:H,\"won\")"],

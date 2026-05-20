@@ -23,7 +23,7 @@ function setupSaveConfig(updates) {
 
 function setupInstallTriggers() {
   installTimeTriggers();
-  return 'Triggers installed (daily follow-ups at 9am, reply scan hourly).';
+  return 'Triggers installed (reply scan runs hourly).';
 }
 
 function setupSendTestEmail() {

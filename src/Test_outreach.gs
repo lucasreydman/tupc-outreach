@@ -10,11 +10,10 @@ function setupBrandsRowForTest(ss, overrides) {
   setConfigValue(ss, 'unsubscribe_mailto', 'mailto:opt@out.com');
   setConfigValue(ss, 'deck_drive_file_id', 'fake_file_id');
   setConfigValue(ss, 'anthropic_api_key', 'sk');
-  setConfigValue(ss, 'daily_send_cap', '30');
-  var defaults = ['Lulu','lulu.com','Apparel','Calvin','calvin@lulu.com','VP Marketing','','queued','','','','','','',0,''];
+  var defaults = ['Lulu','lulu.com','Apparel','Calvin','calvin@lulu.com','VP Marketing','','queued','','','','','',0,''];
   var row = defaults.slice();
   Object.keys(overrides || {}).forEach(function (k) {
-    var idx = { company:0,website:1,category:2,contact_name:3,contact_email:4,contact_role:5,pitch_angle:6,status:7,draft_subject:8,draft_body:9,last_action_date:10,next_action_date:11,reply_at:12,thread_id:13,sent_count:14,notes:15 }[k];
+    var idx = { company:0,website:1,category:2,contact_name:3,contact_email:4,contact_role:5,pitch_angle:6,status:7,draft_subject:8,draft_body:9,last_action_date:10,reply_at:11,thread_id:12,sent_count:13,notes:14 }[k];
     if (idx !== undefined) row[idx] = overrides[k];
   });
   ss.getSheetByName('Brands').appendRow(row);
@@ -82,10 +81,9 @@ registerTest('Outreach: sendDraft advances status to sent and increments counter
   sendDraftForRow(ss, 2, { gmail: fakeGmail, drive: fakeDrive });
   var rowVals = ss.getSheetByName('Brands').getDataRange().getValues()[1];
   assertEqual(rowVals[7], 'sent');
-  assertEqual(rowVals[14], 1, 'sent_count should be 1');
+  assertEqual(rowVals[13], 1, 'sent_count should be 1');
   assert(rowVals[10] instanceof Date, 'last_action_date not a Date');
-  assert(rowVals[11] instanceof Date, 'next_action_date not a Date');
-  assert(String(rowVals[13]).length > 0, 'thread_id not captured');
+  assert(String(rowVals[12]).length > 0, 'thread_id not captured');
 });
 
 registerTest('Outreach: sendDraft attaches deck file', function () {

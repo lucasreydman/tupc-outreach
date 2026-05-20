@@ -9,10 +9,10 @@ A cold sponsorship outreach tool for [Toronto United Pickleball Club](https://ww
 ## What it does
 
 - Manages a list of target sponsorship brands in a Google Sheet.
-- Generates a personalized cold email per brand via Claude — fresh every time, brand-specific opener, one tailored activation idea, signed by the operator.
+- Generates a personalized cold email per brand via Claude — fresh every time, vertical-tied subject hook, brand-specific opener, one tailored activation idea, signed by the operator.
 - Attaches the TUPC sponsorship deck PDF automatically.
-- Sequences follow-ups (T+4, T+10, T+20 by default) and stops when a recipient replies.
-- Tracks open conversations, replies, meetings, and partnerships in a simple Dashboard tab.
+- Tracks replies — hourly scan flips the row's status to `replied` when a brand responds and labels the Gmail thread.
+- No automated follow-up sequence. One personalized email per brand; if they don't reply, they're done. Operator can manually follow up on the Gmail thread if they want.
 - All CASL-compliant (Canadian anti-spam): sender identity, business address, and unsubscribe link in every email.
 
 ## How it's wired

@@ -1,12 +1,10 @@
 // Time-based trigger management. Idempotent — running installTimeTriggers
 // twice does not duplicate triggers.
 
-var TRIGGER_HANDLERS = ['triggerProcessFollowUps', 'triggerScanForReplies'];
+var TRIGGER_HANDLERS = ['triggerScanForReplies'];
 
 function installTimeTriggers() {
   uninstallTimeTriggers();
-  ScriptApp.newTrigger('triggerProcessFollowUps')
-    .timeBased().everyDays(1).atHour(9).create();
   ScriptApp.newTrigger('triggerScanForReplies')
     .timeBased().everyHours(1).create();
 }
@@ -18,10 +16,6 @@ function uninstallTimeTriggers() {
       ScriptApp.deleteTrigger(triggers[i]);
     }
   }
-}
-
-function triggerProcessFollowUps() {
-  processFollowUps();
 }
 
 function triggerScanForReplies() {

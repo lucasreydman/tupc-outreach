@@ -13,7 +13,6 @@ function onOpen() {
     menu.addItem('Generate draft for selected row', 'menuGenerateDraft')
         .addItem('Send selected row', 'menuSendDraft')
         .addSeparator()
-        .addItem('Process follow-ups now', 'menuProcessFollowUps')
         .addItem('Scan for replies now', 'menuScanReplies')
         .addSeparator()
         .addItem('Re-install Sheet structure', 'menuInstallSheets')
@@ -47,17 +46,6 @@ function menuSendDraft() {
     ui.alert('Sent.');
   } catch (e) {
     ui.alert('Send failed: ' + e.message);
-  }
-}
-
-function menuProcessFollowUps() {
-  try {
-    var result = processFollowUps();
-    var msg = 'Follow-ups processed: ' + (result && result.processed !== undefined ? result.processed : 'done');
-    if (result && result.skipped_due_to_cap) msg += ' (daily send cap was already reached)';
-    SpreadsheetApp.getUi().alert(msg);
-  } catch (e) {
-    SpreadsheetApp.getUi().alert('Error: ' + e.message);
   }
 }
 

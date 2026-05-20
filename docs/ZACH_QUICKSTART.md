@@ -1,21 +1,21 @@
 # Zach's quick-start
 
-Welcome. This is a 5-minute read; you'll be sending your first outreach email by the end of it.
+5-minute read. You'll be sending your first outreach email by the end of it.
 
 ## What this tool does
 
 - You add target brands to a Google Sheet.
-- You click "Generate draft" — Claude writes a personalized email referencing that brand, attaches our deck, and shows it to you for review.
-- You click "Send" — the email goes from your Gmail, with our deck attached.
-- The tool automatically sends two follow-ups (after 4 days, then 10 days) and a polite breakup (after 20 days) if they don't reply.
-- When someone replies, the sequence stops automatically and you'll see their row turn yellow (status = `replied`).
+- You click **Generate draft** — Claude writes a personalized email referencing that brand and attaches the TUPC deck.
+- You click **Send** — the email goes from your Gmail, with the deck attached, CC'd to Ricky.
+- The Sheet tracks who you've contacted and automatically flips a row to `replied` when someone responds.
+- That's the whole loop. There are no automated follow-ups — if a brand doesn't reply to the initial email, they're done.
 
 ## First time only
 
 1. Open the Sheet Lucas shared with you.
 2. Click the menu **🎾 TUPC Outreach → Run setup wizard**.
-3. Google will ask you to authorize the script. Hit **Allow** and **Allow** again (it needs Gmail to send and Sheets to track).
-4. Most of your config is already filled in. Just click **Send test to me** — you should see a test email arrive in ~30 seconds. If yes, you're set.
+3. Google will ask you to authorize the script. Hit **Allow** twice (it needs Gmail to send and Sheets to track).
+4. Most of your config is already filled in. Click **Send test to me** — a test email should arrive in ~30 seconds. If yes, you're set.
 
 ## Day-to-day
 
@@ -31,7 +31,7 @@ Go to the **Brands** tab. Add a row per contact:
 | Contact Name | "Calvin Chestnut" |
 | Contact Email | their work email |
 | Contact Role | "VP Marketing" |
-| Pitch Angle | Optional. If you have a specific angle (e.g., "their new athleisure line for active 30s"), drop it here. Claude will weave it in. Leave blank to let Claude figure it out from category alone. |
+| Pitch Angle | Optional. If you have a specific angle (e.g., "their new athleisure line"), drop it here. Claude will weave it in. Leave blank to let Claude figure it out from category alone. |
 | Status | Leave as `queued`. |
 
 You can leave the rest of the columns blank — the tool fills them in.
@@ -44,45 +44,34 @@ You can leave the rest of the columns blank — the tool fills them in.
 4. Read it. Edit if you want — change the opener, tweak the activation idea, anything.
 5. Click **Send now** in the sidebar.
 
-That's the whole loop. The email goes out from your Gmail with the deck PDF attached, CC'd to Ricky.
-
-### Follow-ups (automatic)
-
-Every morning at 9am the tool checks if anyone is due for a follow-up and sends it. You don't have to do anything.
-
-- 4 days after the initial email → follow-up 1.
-- 10 more days → follow-up 2.
-- 20 more days → polite breakup. After that the row goes `dead`.
-- If they reply at any point, the sequence stops.
+That's it. The email goes out from your Gmail with the deck attached, CC'd to Ricky. You can knock through 10–30 of these in an afternoon.
 
 ### When someone replies
 
-Every hour the tool scans Gmail for replies on your sent threads. When it finds one:
+Every hour the tool scans your Gmail for replies on sent threads. When it finds one:
 
 - Status flips to `replied`.
 - The Gmail thread gets the label `TUPC/Replied` so you can spot it in your inbox.
-- Follow-ups stop for that row.
 
 After you've had a conversation, you can manually update the row's status:
 
-- `meeting_booked` — you've got a call on the calendar.
-- `won` — they signed up.
+- `meeting_booked` — call is on the calendar.
+- `won` — they signed.
 - `dead` — they passed.
 
 ### Where to look
 
-- **Brands tab** — your full pipeline.
-- **Dashboard tab** — counts (sent this week, open conversations, replies, meetings, win rate).
-- **Templates tab** — the prompts Claude uses for each follow-up stage. Edit them if you want to change the tone of follow-ups.
-- **Config tab** — your settings (API key, sender info, deck file). Mostly set-and-forget.
+- **Brands tab** — your full pipeline. One row per contact.
+- **Dashboard tab** — running counts (sent, open, replied, meetings, win rate).
+- **Config tab** — your settings (API key, sender info, deck file). Set-and-forget after setup.
 
 ## Things to know
 
-- **Cap is 30 sends/day** by default. If you hit it, follow-ups defer to tomorrow. Bump it in the Config tab if you need more headroom.
-- **Don't blast 50 emails in one minute.** Spread them out — better deliverability, more replies.
+- **Generate ≠ send.** Generating a draft does NOT send it. Always click Send in the sidebar.
 - **You can edit any email before sending.** The first draft is a starting point.
-- **You can skip the auto follow-up sequence** by manually changing a row's status to `replied`, `meeting_booked`, `won`, or `dead`.
 - **If a draft looks off**, click Generate again — Claude regenerates it. Use the Pitch Angle column to give it a steer.
+- **Replies show in your Gmail normally.** The Sheet just tracks the status; you reply from Gmail like any other email.
+- **No follow-ups.** This tool sends ONE email per brand. If you want to follow up manually, reply on the existing Gmail thread — but the tool won't auto-do that.
 
 ## When something looks broken
 
@@ -91,8 +80,8 @@ After you've had a conversation, you can manually update the row's status:
 | "Draft failed" | Click Generate again. If it keeps failing, ping Lucas. |
 | Menu disappeared | Reload the Sheet (close the tab, reopen). |
 | Setup wizard keeps appearing | The API key in Config is empty — open the wizard and paste it back. |
-| Row stuck in `sent_failed` | Email bounced or hit a Gmail limit. Check your Gmail Sent folder; if the email isn't there, try Send again. |
+| Row stuck in `send_failed` | Email bounced or hit a Gmail limit. Check your Gmail Sent folder; if the email isn't there, click Send again. |
 
 For anything weirder, ping Lucas with a screenshot and the row number.
 
-Good luck — go book some meetings.
+Go book some meetings.

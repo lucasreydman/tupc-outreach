@@ -68,8 +68,6 @@ var BRAND_CONTEXT = [
   '6. Plain language. No "leverage," "synergies," or "Pickleball is exploding."',
   '7. Include the sender_name passed in the user message, typically as the signoff.',
   '8. Never invent specifics about the recipient brand. If you don\'t know a concrete fact, work from category + role.',
-  '9. For follow-ups: do NOT reintroduce yourself or re-list TUPC stats. Add one NEW piece of value (a fresh activation idea, a relevant case study, a stat tied to their category). Subject line on follow-ups can be empty (Gmail will keep the original thread subject).',
-  '10. For the breakup email: acknowledge the gap, leave the door open, one-line ask. No pressure.',
   '',
   'OUTPUT FORMAT — NON-NEGOTIABLE',
   'Return STRICT JSON only. No prose before or after. No code fences. Schema:',
@@ -81,8 +79,6 @@ var STATUS = {
   QUEUED: 'queued',
   DRAFTED: 'drafted',
   SENT: 'sent',
-  FOLLOW_UP_1: 'follow_up_1',
-  FOLLOW_UP_2: 'follow_up_2',
   REPLIED: 'replied',
   MEETING_BOOKED: 'meeting_booked',
   WON: 'won',
@@ -90,12 +86,6 @@ var STATUS = {
   DRAFT_FAILED: 'draft_failed',
   SEND_FAILED: 'send_failed',
   INVALID_EMAIL: 'invalid_email'
-};
-
-var STAGE_AFTER = {
-  sent: 'follow_up_1',
-  follow_up_1: 'follow_up_2',
-  follow_up_2: 'breakup'
 };
 
 function isValidEmail(e) {
@@ -127,16 +117,15 @@ function writeBrandCell(sheet, rowIndex, key, value) {
   throw new Error('Unknown column: ' + key);
 }
 
-function buildUserPrompt(row, stage, config) {
+function buildUserPrompt(row, config) {
   var lines = [
     'Brand: ' + (row.company || 'unknown') + ' (' + (row.category || 'Other') + ')',
     'Website: ' + (row.website || 'n/a'),
     'Recipient: ' + (row.contact_name || 'team') + ', ' + (row.contact_role || ''),
     row.pitch_angle ? 'Pitch angle: ' + row.pitch_angle : 'Pitch angle: (infer one — tie to ' + (row.category || 'their category') + ' x pickleball)',
-    'Stage: ' + stage,
     'Sender: ' + (config.sender_name || '[sender]') + ', ' + (config.sender_title || ''),
     '',
-    'Return STRICT JSON: {"subject":"<=60 chars","body":"plain text email body, <=120 words, must include sender name"}'
+    'Return STRICT JSON: {"subject":"<=60 chars, vertical-tied hook","body":"plain text email body, <=120 words, must include sender name"}'
   ];
   return lines.join('\n');
 }
@@ -168,8 +157,7 @@ function generateDraftForRow(ss, rowIndex, opts) {
     throw new Error('Invalid contact_email: ' + row.contact_email);
   }
 
-  var stage = row.status === STATUS.QUEUED || !row.status ? 'initial' : (STAGE_AFTER[row.status] || 'initial');
-  var userMessage = buildUserPrompt(row, stage, config);
+  var userMessage = buildUserPrompt(row, config);
   var claudeCall = opts.claude || function (sys, user, model, key) { return callClaude(sys, user, model, key); };
 
   try {
@@ -218,17 +206,12 @@ function sendDraftForRow(ss, rowIndex, opts) {
 
   var threadId = '';
   try {
-    if (row.thread_id) {
-      gmail.getThreadById(row.thread_id).reply(fullBody, { attachments: attachments, cc: cc });
-      threadId = row.thread_id;
-    } else {
-      var sendResult = gmail.sendEmail(row.contact_email, subject, fullBody, {
-        attachments: attachments,
-        cc: cc,
-        name: config.sender_name || ''
-      });
-      threadId = (sendResult && sendResult.threadId) ? sendResult.threadId : findRecentSentThreadId(gmail, row.contact_email, subject);
-    }
+    var sendResult = gmail.sendEmail(row.contact_email, subject, fullBody, {
+      attachments: attachments,
+      cc: cc,
+      name: config.sender_name || ''
+    });
+    threadId = (sendResult && sendResult.threadId) ? sendResult.threadId : findRecentSentThreadId(gmail, row.contact_email, subject);
   } catch (e) {
     writeBrandCell(brands, rowIndex, 'status', STATUS.SEND_FAILED);
     writeBrandCell(brands, rowIndex, 'notes', (row.notes || '') + '\n[send failed: ' + e.message + ']');
@@ -236,12 +219,8 @@ function sendDraftForRow(ss, rowIndex, opts) {
   }
 
   var today = new Date();
-  var followUpOffset = getTemplateOffset(ss, 'follow_up_1');
-  var nextDate = new Date(today.getTime() + followUpOffset * 24 * 60 * 60 * 1000);
-
   writeBrandCell(brands, rowIndex, 'status', STATUS.SENT);
   writeBrandCell(brands, rowIndex, 'last_action_date', today);
-  writeBrandCell(brands, rowIndex, 'next_action_date', nextDate);
   writeBrandCell(brands, rowIndex, 'thread_id', threadId);
   writeBrandCell(brands, rowIndex, 'sent_count', (Number(row.sent_count) || 0) + 1);
   writeBrandCell(brands, rowIndex, 'draft_subject', '');
@@ -258,122 +237,4 @@ function findRecentSentThreadId(gmail, recipient, subject) {
     if (threads[i].getFirstMessageSubject() === subject) return threads[i].getId();
   }
   return threads[0] ? threads[0].getId() : 'MISSING';
-}
-
-function getTemplateOffset(ss, stage) {
-  var sheet = ss.getSheetByName('Templates');
-  if (!sheet) return 4;
-  var values = sheet.getDataRange().getValues();
-  for (var i = 1; i < values.length; i++) {
-    if (values[i][0] === stage) return Number(values[i][1]) || 0;
-  }
-  return 4;
-}
-
-function processFollowUps(ss, opts) {
-  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
-  opts = opts || {};
-  var brands = ss.getSheetByName('Brands');
-  var config = opts.configOverride || getConfigMap(ss);
-  var cap = parseInt(config.daily_send_cap || '30', 10);
-
-  var values = brands.getDataRange().getValues();
-  var headers = values[0];
-  var headerIdx = {};
-  for (var h = 0; h < headers.length; h++) headerIdx[normalizeHeader(headers[h])] = h;
-
-  function col(key) {
-    if (headerIdx[key] === undefined) throw new Error('Missing column ' + key);
-    return headerIdx[key];
-  }
-
-  var today = new Date();
-  var todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-  // Count today's sends to enforce daily_send_cap before burning Claude calls.
-  var sentToday = 0;
-  for (var i = 1; i < values.length; i++) {
-    var lastAction = values[i][col('last_action_date')];
-    if (lastAction instanceof Date && lastAction >= todayStart) sentToday++;
-  }
-  if (sentToday >= cap) {
-    if (typeof console !== 'undefined') console.log('Daily send cap reached: ' + sentToday + '/' + cap);
-    return { processed: 0, skipped_due_to_cap: true };
-  }
-
-  // Find rows due for a follow-up.
-  var due = [];
-  for (var i = 1; i < values.length; i++) {
-    var status = values[i][col('status')];
-    var nextAction = values[i][col('next_action_date')];
-    var sentCount = Number(values[i][col('sent_count')] || 0);
-    if (
-      (status === STATUS.SENT || status === STATUS.FOLLOW_UP_1 || status === STATUS.FOLLOW_UP_2) &&
-      nextAction instanceof Date && nextAction <= today &&
-      sentCount < 4
-    ) {
-      due.push({ rowIndex: i + 1, nextAction: nextAction });
-    }
-  }
-  due.sort(function (a, b) { return a.nextAction - b.nextAction; });
-
-  var processed = 0;
-  for (var j = 0; j < due.length; j++) {
-    if (sentToday >= cap) break;
-    try {
-      sendFollowUpForRow(ss, due[j].rowIndex, opts);
-      sentToday++;
-      processed++;
-    } catch (e) {
-      if (typeof console !== 'undefined') console.error('Follow-up failed for row ' + due[j].rowIndex + ': ' + e.message);
-    }
-  }
-  return { processed: processed, skipped_due_to_cap: false };
-}
-
-function sendFollowUpForRow(ss, rowIndex, opts) {
-  opts = opts || {};
-  var brands = ss.getSheetByName('Brands');
-  var config = opts.configOverride || getConfigMap(ss);
-  var row = readBrandRow(brands, rowIndex);
-
-  var nextStage = STAGE_AFTER[row.status];
-  if (!nextStage) throw new Error('No follow-up stage after ' + row.status);
-
-  var userMessage = buildUserPrompt(row, nextStage, config);
-  var claudeCall = opts.claude || function (sys, user, model, key) { return callClaude(sys, user, model, key); };
-  var result = claudeCall(BRAND_CONTEXT, userMessage, config.anthropic_model || 'claude-sonnet-4-6', config.anthropic_api_key);
-
-  var fullBody = composeFullBody(result.body, config);
-  var gmail = opts.gmail || (typeof GmailApp !== 'undefined' ? GmailApp : null);
-  var drive = opts.drive || (typeof DriveApp !== 'undefined' ? DriveApp : null);
-  if (!gmail) throw new Error('GmailApp unavailable');
-
-  var attachments = [];
-  if (config.deck_drive_file_id && drive) {
-    try { attachments.push(drive.getFileById(config.deck_drive_file_id).getBlob()); } catch (e) { /* non-fatal */ }
-  }
-  var thread = gmail.getThreadById(row.thread_id);
-  if (!thread) throw new Error('Thread ' + row.thread_id + ' not found');
-  thread.reply(fullBody, { attachments: attachments, cc: config.cc_emails || '' });
-
-  var today = new Date();
-  var newStatus;
-  var nextDate = null;
-  if (nextStage === 'breakup') {
-    newStatus = STATUS.DEAD;
-  } else if (nextStage === 'follow_up_1') {
-    newStatus = STATUS.FOLLOW_UP_1;
-    var off1 = getTemplateOffset(ss, 'follow_up_2');
-    nextDate = new Date(today.getTime() + off1 * 24 * 60 * 60 * 1000);
-  } else {
-    newStatus = STATUS.FOLLOW_UP_2;
-    var off2 = getTemplateOffset(ss, 'breakup');
-    nextDate = new Date(today.getTime() + off2 * 24 * 60 * 60 * 1000);
-  }
-
-  writeBrandCell(brands, rowIndex, 'status', newStatus);
-  writeBrandCell(brands, rowIndex, 'last_action_date', today);
-  if (nextDate) writeBrandCell(brands, rowIndex, 'next_action_date', nextDate);
-  writeBrandCell(brands, rowIndex, 'sent_count', (Number(row.sent_count) || 0) + 1);
 }
