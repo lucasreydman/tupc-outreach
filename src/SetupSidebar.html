@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 14px; font-size: 13px; color: #222; }
+    h2 { color: #14633e; font-size: 16px; margin: 0 0 4px 0; }
+    p.intro { color: #555; font-size: 12px; margin: 0 0 14px 0; line-height: 1.4; }
+    label { display: block; margin-top: 10px; font-weight: 600; color: #555; font-size: 12px; }
+    input, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 13px; }
+    textarea { min-height: 80px; resize: vertical; }
+    button { margin-top: 12px; padding: 8px 14px; background: #14633e; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    button.secondary { background: #f1f1f1; color: #333; }
+    button:hover { opacity: 0.9; }
+    .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .actions button { flex: 1 1 auto; }
+    .status { margin-top: 12px; font-size: 12px; color: #14633e; min-height: 18px; }
+    .status.error { color: #c33; }
+    small { color: #888; font-weight: normal; }
+  </style>
+</head>
+<body>
+  <h2>TUPC Outreach setup</h2>
+  <p class="intro">Fill in your details, save, install triggers, then send a test email to yourself. Once the test email arrives you're ready to add brands.</p>
+
+  <label>Anthropic API key</label>
+  <input type="password" id="anthropic_api_key" placeholder="sk-ant-…" />
+
+  <label>Your name <small>(used in signature + Claude prompt)</small></label>
+  <input type="text" id="sender_name" />
+
+  <label>Your title</label>
+  <input type="text" id="sender_title" />
+
+  <label>Signature <small>(multi-line; appended after every email)</small></label>
+  <textarea id="sender_signature"></textarea>
+
+  <label>CC emails <small>(comma-separated, optional)</small></label>
+  <input type="text" id="cc_emails" placeholder="rliorti@gmail.com" />
+
+  <label>Deck Drive file ID <small>(the ID from the share URL)</small></label>
+  <input type="text" id="deck_drive_file_id" />
+
+  <label>Business address <small>(required for CASL)</small></label>
+  <input type="text" id="business_address" />
+
+  <label>Unsubscribe mailto <small>(required for CASL)</small></label>
+  <input type="text" id="unsubscribe_mailto" />
+
+  <div class="actions">
+    <button onclick="save()">Save</button>
+    <button class="secondary" onclick="installTriggers()">Install triggers</button>
+    <button class="secondary" onclick="sendTest()">Send test to me</button>
+  </div>
+  <div class="status" id="status"></div>
+
+  <script>
+    var FIELDS = ['anthropic_api_key','sender_name','sender_title','sender_signature','cc_emails','deck_drive_file_id','business_address','unsubscribe_mailto'];
+
+    google.script.run
+      .withSuccessHandler(function (cfg) {
+        FIELDS.forEach(function (k) {
+          var el = document.getElementById(k);
+          if (el && cfg[k] !== undefined && cfg[k] !== null) el.value = cfg[k];
+        });
+      })
+      .setupGetConfig();
+
+    function setStatus(msg, isErr) {
+      var el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = 'status' + (isErr ? ' error' : '');
+    }
+
+    function save() {
+      var updates = {};
+      FIELDS.forEach(function (k) { updates[k] = document.getElementById(k).value; });
+      setStatus('Saving...');
+      google.script.run
+        .withSuccessHandler(function (msg) { setStatus(msg); })
+        .withFailureHandler(function (e) { setStatus('Error: ' + e.message, true); })
+        .setupSaveConfig(updates);
+    }
+
+    function installTriggers() {
+      setStatus('Installing triggers...');
+      google.script.run
+        .withSuccessHandler(function (msg) { setStatus(msg); })
+        .withFailureHandler(function (e) { setStatus('Error: ' + e.message, true); })
+        .setupInstallTriggers();
+    }
+
+    function sendTest() {
+      setStatus('Sending test...');
+      google.script.run
+        .withSuccessHandler(function (msg) { setStatus(msg); })
+        .withFailureHandler(function (e) { setStatus('Error: ' + e.message, true); })
+        .setupSendTestEmail();
+    }
+  </script>
+</body>
+</html>

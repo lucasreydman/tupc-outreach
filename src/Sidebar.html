@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 12px; font-size: 13px; color: #222; }
+    h2 { color: #14633e; font-size: 15px; margin: 0 0 8px 0; }
+    label { display: block; margin-top: 12px; font-weight: 600; color: #555; font-size: 12px; }
+    input, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 13px; }
+    textarea { min-height: 260px; resize: vertical; }
+    .meta { color: #888; margin-bottom: 4px; font-size: 12px; }
+    .row { display: flex; gap: 8px; margin-top: 14px; }
+    button { padding: 8px 14px; background: #14633e; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; flex: 1; }
+    button.secondary { background: #f1f1f1; color: #333; }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status { margin-top: 12px; font-size: 12px; color: #14633e; min-height: 16px; }
+    .status.error { color: #c33; }
+  </style>
+</head>
+<body>
+  <h2>Draft preview</h2>
+  <div class="meta">Row <?= rowIndex ?></div>
+  <div id="recipient" class="meta"></div>
+  <label>Subject</label>
+  <input type="text" id="subject" />
+  <label>Body</label>
+  <textarea id="body"></textarea>
+  <div class="row">
+    <button class="secondary" onclick="save()">Save edits</button>
+    <button onclick="send()">Send now</button>
+  </div>
+  <div class="status" id="status"></div>
+  <script>
+    var rowIndex = <?= rowIndex ?>;
+    google.script.run
+      .withSuccessHandler(function (d) {
+        document.getElementById('subject').value = d.subject || '';
+        document.getElementById('body').value = d.body || '';
+        document.getElementById('recipient').textContent = 'To: ' + (d.contact_email || '') + (d.company ? ' (' + d.company + ')' : '');
+      })
+      .getDraftForRow(rowIndex);
+
+    function setStatus(msg, isErr) {
+      var el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = 'status' + (isErr ? ' error' : '');
+    }
+    function save() {
+      var s = document.getElementById('subject').value;
+      var b = document.getElementById('body').value;
+      setStatus('Saving...');
+      google.script.run
+        .withSuccessHandler(function () { setStatus('Saved.'); })
+        .withFailureHandler(function (e) { setStatus('Error: ' + e.message, true); })
+        .saveDraftEdits(rowIndex, s, b);
+    }
+    function send() {
+      var s = document.getElementById('subject').value;
+      var b = document.getElementById('body').value;
+      setStatus('Saving + sending...');
+      google.script.run
+        .withSuccessHandler(function () {
+          google.script.run
+            .withSuccessHandler(function () { setStatus('Sent.'); })
+            .withFailureHandler(function (e) { setStatus('Send failed: ' + e.message, true); })
+            .sendDraftFromSidebar(rowIndex);
+        })
+        .withFailureHandler(function (e) { setStatus('Save failed: ' + e.message, true); })
+        .saveDraftEdits(rowIndex, s, b);
+    }
+  </script>
+</body>
+</html>
