@@ -2,6 +2,10 @@
 
 A cold sponsorship outreach tool for [Toronto United Pickleball Club](https://www.cnplleague.com/) (CNPL). Built as a Google Sheet + Apps Script + Anthropic Claude — no separate backend, no hosting, no deployment. The Sheet is the CRM; Claude writes every email fresh per brand; Gmail does the sending.
 
+> 👉 **Setting this up for the first time?** Read **[docs/HANDOFF.md](docs/HANDOFF.md)** — a complete, no-prior-experience-required walkthrough that takes about 30 minutes.
+>
+> 👉 **Already set up and just want to use it?** Read **[docs/ZACH_QUICKSTART.md](docs/ZACH_QUICKSTART.md)** — the 5-minute day-1 guide.
+
 ## What it does
 
 - Manages a list of target sponsorship brands in a Google Sheet.
