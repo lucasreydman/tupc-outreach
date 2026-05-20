@@ -54,7 +54,9 @@ function FakeGmail() {
 }
 
 function FakeSheet(headers, rows) {
-  var data = [headers.slice()].concat((rows || []).map(function (r) { return r.slice(); }));
+  var data = headers && headers.length
+    ? [headers.slice()].concat((rows || []).map(function (r) { return r.slice(); }))
+    : (rows || []).map(function (r) { return r.slice(); });
   var self = {};
   self.getDataRange = function () {
     return {
