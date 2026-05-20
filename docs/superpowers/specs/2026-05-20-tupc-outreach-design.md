@@ -173,21 +173,23 @@ The signature, CASL business address, and unsubscribe mailto are appended by `Ou
 
 `processFollowUps()` runs daily at 9am Eastern:
 
-1. Find rows where `next_action_date <= today` AND `status in (sent, follow_up_1, follow_up_2)` AND `sent_count < 4`.
-2. For each: determine next stage from current status (`sent → follow_up_1`, `follow_up_1 → follow_up_2`, `follow_up_2 → breakup`).
-3. If current status already `follow_up_2` and breakup was just sent, set `status = dead` afterward.
-4. Generate stage-specific email via Claude (same flow as initial) and send as a reply on the existing thread (`GmailApp.getThreadById(thread_id).reply(body, {htmlBody, attachments})`).
-5. Update status to the new stage and set `next_action_date = today + next_stage_offset`.
-
-`daily_send_cap` enforces a hard limit on total sends in a 24h window — overflow defers to the next day.
+1. Count today's sends so far (rows with `last_action_date = today`). If that count ≥ `daily_send_cap`, exit immediately — do not burn Claude API calls on rows that can't send today.
+2. Find rows where `next_action_date <= today` AND `status in (sent, follow_up_1, follow_up_2)` AND `sent_count < 4`. Process in `next_action_date` order (oldest first), stopping if the cap is hit mid-loop.
+3. For each row, determine the next stage from current status:
+   - `sent → follow_up_1`
+   - `follow_up_1 → follow_up_2`
+   - `follow_up_2 → breakup` (the breakup email itself is a send action; after it lands, the row's status becomes `dead`, not `breakup`. `breakup` is never a persisted status — it's the stage name passed to the Claude prompt.)
+4. Generate stage-specific email via Claude and send as a reply on the existing thread (`GmailApp.getThreadById(thread_id).reply(body, {htmlBody, attachments})`).
+5. Update status to the new stage (or `dead` after a breakup send) and set `next_action_date = today + next_stage_offset`.
 
 ### Reply detection
 
 `scanForReplies()` runs hourly:
 
-1. For each Brands row with non-empty `thread_id` and `status ∉ (replied, meeting_booked, won, dead)`:
+1. For each Brands row with non-empty `thread_id` and `status ∉ (replied, meeting_booked, won, dead, invalid_email, send_failed, draft_failed)`:
 2. Fetch `GmailApp.getThreadById(thread_id)`.
-3. Walk messages: if any message exists where `from !== sender_email` AND `date > last_action_date` → set `status = replied`, `reply_at = now`, apply Gmail label `TUPC/Replied` to the thread for visibility.
+3. Find the most recent outbound message in the thread (`message.getFrom()` matches the authorized sender). Compare against actual `Message.getDate()` timestamps, not the Sheet's `last_action_date` — Sheet dates are dates, Gmail timestamps are datetimes, and a reply landing the same day as a send would otherwise be missed.
+4. If any inbound message (`getFrom()` not matching sender) has a timestamp later than the most recent outbound, set `status = replied`, `reply_at = the inbound message's timestamp`, and apply Gmail label `TUPC/Replied` to the thread.
 
 ### Setup wizard (first-run UX)
 
@@ -232,7 +234,10 @@ To stop receiving these emails: {unsubscribe_mailto}
 
 Apps Script has no native test runner, so we hand-roll one:
 
-- `tests/` contains `.gs` files with functions named `test_*`.
+- `tests/` contains `.gs` files with functions named `test_*`. These files DO get pushed by `clasp` alongside `src/` — Apps Script projects are flat. To keep Zach from invoking them accidentally:
+  - Test functions never appear in the custom menu.
+  - `runAllTests()` is only callable from the Apps Script editor (no menu entry, no trigger).
+  - All test files are prefixed `Test_` so they sort to the bottom of the editor file list.
 - `runAllTests()` entrypoint executes them, writes pass/fail to a `Test Results` tab.
 - Test doubles:
   - `FakeClaude` returns canned JSON without calling the API.
